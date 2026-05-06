@@ -2,14 +2,19 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 import traceback
 import warnings
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 from typing import Any
 
 warnings.filterwarnings("ignore")
 warnings.showwarning = lambda *args, **kwargs: None
+
+if __package__ in {None, ""}:
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from message_polishing import MessagePolishingInput, run_message_polishing_workflow
 from message_polishing.env import load_dotenv
