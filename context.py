@@ -92,6 +92,7 @@ def make_initial_state(
         analysis=None,
         polishing_validation=None,
         feedback_result=None,
+        feedback_message=None,
         revision_instruction=None,
         feedback_iteration=0,
         events=[],
