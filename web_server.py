@@ -145,6 +145,20 @@ HTML = """<!doctype html>
       font-size: 14px;
       line-height: 1.5;
     }
+    .debug {
+      margin-top: 16px;
+      min-height: 180px;
+      max-height: 360px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 12px;
+      background: #101828;
+      color: #eef4ff;
+      font: 12px/1.55 ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+    }
     .error {
       color: var(--danger);
       font-weight: 650;
@@ -182,6 +196,8 @@ HTML = """<!doctype html>
         <label>Polished Message</label>
         <div class="output" id="output"></div>
         <div class="summary" id="summary"></div>
+        <label for="debug" style="margin-top:16px;">Feature / Debug Output</label>
+        <div class="debug" id="debug"></div>
       </section>
     </div>
   </main>
@@ -194,6 +210,7 @@ HTML = """<!doctype html>
     const feedback = document.getElementById("feedback");
     const output = document.getElementById("output");
     const summary = document.getElementById("summary");
+    const debug = document.getElementById("debug");
     const submit = document.getElementById("submit");
 
     async function polish() {
@@ -208,7 +225,8 @@ HTML = """<!doctype html>
             originalMessage: original.value,
             feedbackMessage: feedback.value || null,
             previousPolishedMessage: state.previousPolishedMessage,
-            sessionId: state.sessionId
+            sessionId: state.sessionId,
+            debug: true
           })
         });
         const data = await response.json();
@@ -217,6 +235,7 @@ HTML = """<!doctype html>
         }
         output.textContent = data.polishedMessage;
         summary.textContent = data.appliedFeedbackSummary || "";
+        debug.textContent = data.debug ? JSON.stringify(data.debug, null, 2) : "";
         state.previousPolishedMessage = data.polishedMessage;
       } catch (error) {
         summary.textContent = error.message;
@@ -234,6 +253,7 @@ HTML = """<!doctype html>
       feedback.value = "";
       output.textContent = "";
       summary.textContent = "";
+      debug.textContent = "";
       state.previousPolishedMessage = null;
       state.sessionId = "browser-test-" + Math.random().toString(36).slice(2);
     });
@@ -266,8 +286,9 @@ class PolishingRequestHandler(BaseHTTPRequestHandler):
 
         try:
             payload = self._read_json()
+            debug = bool(payload.pop("debug", False))
             workflow_input = MessagePolishingInput.model_validate(payload)
-            result = run_message_polishing_workflow(workflow_input, debug=False)
+            result = run_message_polishing_workflow(workflow_input, debug=debug)
 
             self._send_json(result.model_dump(by_alias=True, exclude_none=True))
         except Exception as exc:
