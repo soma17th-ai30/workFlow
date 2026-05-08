@@ -5,8 +5,8 @@ import PolishPage from "./pages/PolishPage";
 export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<PolishPage />} />
-      <Route path="/guide" element={<GuidePage />} />
+      <Route path="/" element={<GuidePage />} />
+      <Route path="/polish" element={<PolishPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

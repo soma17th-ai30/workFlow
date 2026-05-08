@@ -6,7 +6,6 @@ import ResultCard from "../components/polish/ResultCard";
 import { polishMessage } from "../api";
 import {
   channelOptions,
-  emptyResultPreview,
   exampleMessage,
   relationshipOptions,
   toneOptions
@@ -24,8 +23,6 @@ export default function PolishPage() {
   const [relationship, setRelationship] = useState(relationshipOptions[0]);
   const [channel, setChannel] = useState(channelOptions[0]);
   const [tone, setTone] = useState(toneOptions[0]);
-  const [includeDebug, setIncludeDebug] = useState(false);
-  const [debugOutput, setDebugOutput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [copyStatus, setCopyStatus] = useState("");
@@ -46,7 +43,7 @@ export default function PolishPage() {
 
   const canSubmit = originalMessage.trim().length > 0 && !isLoading;
   const hasResult = polishedMessage.trim().length > 0;
-  const resultText = hasResult ? polishedMessage : emptyResultPreview;
+  const resultText = hasResult ? polishedMessage : "";
 
   async function handlePolish() {
     if (!canSubmit) return;
@@ -61,14 +58,12 @@ export default function PolishPage() {
         feedbackMessage: feedbackMessage.trim() || null,
         previousPolishedMessage,
         userContext,
-        sessionId,
-        debug: includeDebug
+        sessionId
       });
 
       setPolishedMessage(data.polishedMessage);
       setPreviousPolishedMessage(data.polishedMessage);
       setAppliedFeedbackSummary(data.appliedFeedbackSummary || "");
-      setDebugOutput(data.debug ? JSON.stringify(data.debug, null, 2) : "");
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "알 수 없는 오류가 발생했습니다.");
     } finally {
@@ -88,7 +83,6 @@ export default function PolishPage() {
     setPreviousPolishedMessage(null);
     setPolishedMessage("");
     setAppliedFeedbackSummary("");
-    setDebugOutput("");
     setErrorMessage("");
     setCopyStatus("");
   }
@@ -104,7 +98,6 @@ export default function PolishPage() {
           relationship={relationship}
           channel={channel}
           tone={tone}
-          includeDebug={includeDebug}
           isLoading={isLoading}
           hasResult={hasResult}
           canSubmit={canSubmit}
@@ -114,7 +107,6 @@ export default function PolishPage() {
           onRelationshipChange={setRelationship}
           onChannelChange={setChannel}
           onToneChange={setTone}
-          onIncludeDebugChange={setIncludeDebug}
           onSubmit={handlePolish}
           onReset={handleReset}
         />
@@ -126,8 +118,8 @@ export default function PolishPage() {
           tone={tone}
           appliedFeedbackSummary={appliedFeedbackSummary}
           copyStatus={copyStatus}
-          includeDebug={includeDebug}
-          debugOutput={debugOutput}
+          isLoading={isLoading}
+          hasResult={hasResult}
           onCopy={handleCopy}
         />
       </main>

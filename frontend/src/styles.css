@@ -202,8 +202,7 @@ button:disabled {
 }
 
 label,
-.eyebrow,
-.debug-title {
+.eyebrow {
   color: #575c55;
   font-size: 12px;
   font-weight: 900;
@@ -306,22 +305,6 @@ select:focus {
   background: #e9e8e5;
 }
 
-.debug-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-left: auto;
-  color: #6d716c;
-  font-size: 13px;
-  font-weight: 800;
-}
-
-.debug-toggle input {
-  width: 15px;
-  height: 15px;
-  accent-color: var(--primary);
-}
-
 .error-message {
   margin: 18px 0 0;
   color: var(--danger);
@@ -361,6 +344,7 @@ h1 {
 }
 
 .result-box {
+  display: block;
   min-height: 278px;
   border-radius: 7px;
   padding: 28px;
@@ -369,6 +353,53 @@ h1 {
   font-size: 16px;
   line-height: 1.75;
   white-space: pre-wrap;
+}
+
+.result-box.empty,
+.result-box.loading {
+  display: grid;
+  place-items: center;
+  color: #8a8f88;
+  text-align: center;
+}
+
+.empty-result {
+  color: #a2a69f;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.loading-state {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+}
+
+.loading-state strong {
+  color: var(--primary-deep);
+  font-size: 16px;
+}
+
+.loading-state p {
+  margin: 0;
+  color: #8a8f88;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.spinner {
+  width: 34px;
+  height: 34px;
+  border: 3px solid #e2ebe5;
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .tag-row {
@@ -485,24 +516,6 @@ h1 {
 .spark.three {
   left: 216px;
   top: 94px;
-}
-
-.debug-panel {
-  margin-top: 18px;
-}
-
-.debug-panel pre {
-  max-height: 240px;
-  overflow: auto;
-  margin: 8px 0 0;
-  border-radius: 7px;
-  padding: 12px;
-  background: #2d342f;
-  color: #f4f7f2;
-  font-size: 12px;
-  line-height: 1.55;
-  white-space: pre-wrap;
-  word-break: break-word;
 }
 
 .site-footer {
@@ -996,10 +1009,6 @@ h1 {
   .actions {
     align-items: stretch;
     flex-direction: column;
-  }
-
-  .debug-toggle {
-    margin-left: 0;
   }
 
   .visual-panel {

@@ -6,7 +6,6 @@ type ComposerCardProps = {
   relationship: string;
   channel: string;
   tone: string;
-  includeDebug: boolean;
   isLoading: boolean;
   hasResult: boolean;
   canSubmit: boolean;
@@ -16,7 +15,6 @@ type ComposerCardProps = {
   onRelationshipChange: (value: string) => void;
   onChannelChange: (value: string) => void;
   onToneChange: (value: string) => void;
-  onIncludeDebugChange: (value: boolean) => void;
   onSubmit: () => void;
   onReset: () => void;
 };
@@ -27,7 +25,6 @@ export default function ComposerCard({
   relationship,
   channel,
   tone,
-  includeDebug,
   isLoading,
   hasResult,
   canSubmit,
@@ -37,7 +34,6 @@ export default function ComposerCard({
   onRelationshipChange,
   onChannelChange,
   onToneChange,
-  onIncludeDebugChange,
   onSubmit,
   onReset
 }: ComposerCardProps) {
@@ -114,14 +110,6 @@ export default function ComposerCard({
           <button type="button" className="secondary-action" onClick={onReset}>
             초기화
           </button>
-          <label className="debug-toggle">
-            <input
-              type="checkbox"
-              checked={includeDebug}
-              onChange={(event) => onIncludeDebugChange(event.target.checked)}
-            />
-            개발용 분석 결과 포함
-          </label>
         </div>
 
         {errorMessage && <p className="error-message">{errorMessage}</p>}

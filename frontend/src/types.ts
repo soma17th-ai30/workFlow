@@ -15,13 +15,11 @@ export type MessagePolishingRequest = {
   previousPolishedMessage?: string | null;
   userContext?: UserContext | string | null;
   sessionId?: string | null;
-  debug?: boolean;
 };
 
 export type MessagePolishingResponse = {
   polishedMessage: string;
   appliedFeedbackSummary?: string;
-  debug?: Record<string, unknown>;
 };
 
 export type ApiErrorResponse = {

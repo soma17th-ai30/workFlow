@@ -7,10 +7,10 @@ export default function SiteHeader() {
         30만큼 사랑해
       </NavLink>
       <nav className="main-nav" aria-label="주요 메뉴">
+        <NavLink to="/polish">Polish</NavLink>
         <NavLink to="/" end>
-          Polish
+          Guide
         </NavLink>
-        <NavLink to="/guide">Guide</NavLink>
       </nav>
       <div className="header-tools">
         <button className="icon-button" type="button" aria-label="되돌리기">
@@ -22,7 +22,7 @@ export default function SiteHeader() {
         <button className="icon-button" type="button" aria-label="계정">
           ○
         </button>
-        <NavLink className="start-writing" to="/">
+        <NavLink className="start-writing" to="/polish">
           Start Writing
         </NavLink>
       </div>
