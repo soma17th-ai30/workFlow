@@ -1,8 +1,17 @@
-import { channelOptions, exampleMessage, relationshipOptions, toneOptions } from "../../constants/polishOptions";
+import {
+  channelOptions,
+  purposeOptions,
+  relationshipOptions,
+  scenarioExamples,
+  toneOptions
+} from "../../constants/polishOptions";
+
+type Scenario = (typeof scenarioExamples)[number];
 
 type ComposerCardProps = {
   originalMessage: string;
   feedbackMessage: string;
+  purpose: string;
   relationship: string;
   channel: string;
   tone: string;
@@ -12,9 +21,11 @@ type ComposerCardProps = {
   errorMessage: string;
   onOriginalMessageChange: (value: string) => void;
   onFeedbackMessageChange: (value: string) => void;
+  onPurposeChange: (value: string) => void;
   onRelationshipChange: (value: string) => void;
   onChannelChange: (value: string) => void;
   onToneChange: (value: string) => void;
+  onScenarioSelect: (scenario: Scenario) => void;
   onSubmit: () => void;
   onReset: () => void;
 };
@@ -22,6 +33,7 @@ type ComposerCardProps = {
 export default function ComposerCard({
   originalMessage,
   feedbackMessage,
+  purpose,
   relationship,
   channel,
   tone,
@@ -31,9 +43,11 @@ export default function ComposerCard({
   errorMessage,
   onOriginalMessageChange,
   onFeedbackMessageChange,
+  onPurposeChange,
   onRelationshipChange,
   onChannelChange,
   onToneChange,
+  onScenarioSelect,
   onSubmit,
   onReset
 }: ComposerCardProps) {
@@ -45,6 +59,7 @@ export default function ComposerCard({
           onSubmit();
         }}
       >
+        <div className="step-label">1. 보내기 망설여지는 문장 입력</div>
         <div className="field">
           <div className="label-row">
             <label htmlFor="originalMessage">원문 메시지</label>
@@ -57,11 +72,28 @@ export default function ComposerCard({
             className="original-input"
             value={originalMessage}
             onChange={(event) => onOriginalMessageChange(event.target.value)}
-            placeholder="다듬고 싶은 메시지를 입력하세요."
+            placeholder="예: 교수님 제가 일이 있어서 과제 제출 좀 늦게 해도 될까요?"
           />
         </div>
 
+        <div className="scenario-row" aria-label="빠른 시나리오 선택">
+          {scenarioExamples.map((scenario) => (
+            <button type="button" key={scenario.label} onClick={() => onScenarioSelect(scenario)}>
+              {scenario.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="step-label">2. 목적과 관계 맥락 선택</div>
         <div className="context-grid" aria-label="메시지 맥락 선택">
+          <label>
+            목적
+            <select value={purpose} onChange={(event) => onPurposeChange(event.target.value)}>
+              {purposeOptions.map((option) => (
+                <option key={option}>{option}</option>
+              ))}
+            </select>
+          </label>
           <label>
             상대
             <select value={relationship} onChange={(event) => onRelationshipChange(event.target.value)}>
@@ -89,23 +121,24 @@ export default function ComposerCard({
         </div>
 
         <div className="field feedback-field">
-          <label htmlFor="feedbackMessage">수정 피드백</label>
+          <label htmlFor="feedbackMessage">추가 요청 / 수정 피드백</label>
           <textarea
             id="feedbackMessage"
             className="feedback-input"
             value={feedbackMessage}
             onChange={(event) => onFeedbackMessageChange(event.target.value)}
-            placeholder="첫 요청이면 비워두고, 결과를 받은 뒤 더 반영할 내용을 적으세요."
+            placeholder="예: 더 죄송한 느낌으로, 너무 길지 않게, 고객 응대처럼 전문적으로"
           />
+        </div>
+
+        <div className="privacy-note">
+          메시지 원문은 저장하지 않는 것을 원칙으로 하고, 입력한 맥락은 이번 요청 처리에만 사용됩니다.
         </div>
 
         <div className="actions">
           <button className="primary-action" type="submit" disabled={!canSubmit}>
             <span aria-hidden="true">✎</span>
-            {isLoading ? "다듬는 중" : hasResult ? "다시 다듬기" : "다듬기"}
-          </button>
-          <button type="button" className="secondary-action" onClick={() => onOriginalMessageChange(exampleMessage)}>
-            예시 넣기
+            {isLoading ? "다듬는 중" : hasResult ? "피드백 반영하기" : "메시지 다듬기"}
           </button>
           <button type="button" className="secondary-action" onClick={onReset}>
             초기화

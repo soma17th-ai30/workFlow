@@ -1,8 +1,10 @@
 export type UserContext = {
+  purpose: string;
   relationship: string;
   communication_channel: string;
   preferred_tone: string;
   selected_options: {
+    purpose: string;
     relationship: string;
     channel: string;
     tone: string;
