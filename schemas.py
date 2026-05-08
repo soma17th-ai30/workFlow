@@ -64,7 +64,11 @@ class WorkflowEvent(MessagePolishingBaseModel):
 class FeatureAnalysisResult(MessagePolishingBaseModel):
     intent: Optional[str] = None
     relationship: Optional[str] = None
+    situation: Optional[str] = None
     recipient: Optional[str] = None
+    current_speech_level: Optional[str] = None
+    speech_level: Optional[str] = None
+    current_tone: Optional[str] = None
     tone: Optional[str] = None
     communication_channel: Optional[str] = None
     constraints: list[str] = Field(default_factory=list)
@@ -81,7 +85,11 @@ class FeatureAnalysisResult(MessagePolishingBaseModel):
             {
                 "intent",
                 "relationship",
+                "situation",
                 "recipient",
+                "current_speech_level",
+                "speech_level",
+                "current_tone",
                 "tone",
                 "communication_channel",
                 "constraints",

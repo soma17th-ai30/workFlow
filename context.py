@@ -151,7 +151,11 @@ def update_context_summary(state: MessagePolishingState) -> str:
     summary = {
         "last_intent": analysis.intent if analysis else None,
         "last_relationship": analysis.relationship if analysis else None,
+        "last_situation": analysis.situation if analysis else None,
         "last_recipient": analysis.recipient if analysis else None,
+        "last_current_speech_level": analysis.current_speech_level if analysis else None,
+        "last_speech_level": analysis.speech_level if analysis else None,
+        "last_current_tone": analysis.current_tone if analysis else None,
         "last_tone": analysis.tone if analysis else None,
         "last_polished_message": state.get("current_polished_message"),
         "recent_user_feedback": recent_feedback[-5:],
@@ -161,6 +165,7 @@ def update_context_summary(state: MessagePolishingState) -> str:
 
 def build_session_snapshot(state: MessagePolishingState) -> dict[str, Any]:
     return {
+        "original_message": state.get("original_message"),
         "context_summary": update_context_summary(state),
         "previous_polished_message": state.get("current_polished_message"),
         "analysis": model_to_payload(state.get("analysis")),
