@@ -95,7 +95,7 @@ export default function PolishPage() {
 
   return (
     <div className="page-frame">
-      <SiteHeader sessionId={sessionId} />
+      <SiteHeader />
 
       <main className="app-shell">
         <ComposerCard

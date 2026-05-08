@@ -1,25 +1,18 @@
-type SiteHeaderProps = {
-  sessionId: string;
-};
+import { NavLink } from "react-router-dom";
 
-export default function SiteHeader({ sessionId }: SiteHeaderProps) {
+export default function SiteHeader() {
   return (
     <header className="site-header">
-      <a className="brand" href="/" aria-label="30만큼 사랑해 홈">
+      <NavLink className="brand" to="/" aria-label="30만큼 사랑해 홈">
         30만큼 사랑해
-      </a>
+      </NavLink>
       <nav className="main-nav" aria-label="주요 메뉴">
-        <a className="active" href="/">
+        <NavLink to="/" end>
           Polish
-        </a>
-        <a href="/">History</a>
-        <a href="/">Templates</a>
-        <a href="/">Guide</a>
+        </NavLink>
+        <NavLink to="/guide">Guide</NavLink>
       </nav>
       <div className="header-tools">
-        <span className="session-pill" title={sessionId}>
-          세션 유지 중
-        </span>
         <button className="icon-button" type="button" aria-label="되돌리기">
           ↺
         </button>
@@ -29,6 +22,9 @@ export default function SiteHeader({ sessionId }: SiteHeaderProps) {
         <button className="icon-button" type="button" aria-label="계정">
           ○
         </button>
+        <NavLink className="start-writing" to="/">
+          Start Writing
+        </NavLink>
       </div>
     </header>
   );
