@@ -1,3 +1,9 @@
+from __future__ import annotations
+
+import sys
+
+sys.modules.setdefault("message_polishing", sys.modules[__name__])
+
 from message_polishing.schemas import MessagePolishingInput, MessagePolishingOutput
 
 
