@@ -84,42 +84,6 @@ export default function ComposerCard({
           ))}
         </div>
 
-        <div className="step-label">2. 목적과 관계 맥락 선택</div>
-        <div className="context-grid" aria-label="메시지 맥락 선택">
-          <label>
-            목적
-            <select value={purpose} onChange={(event) => onPurposeChange(event.target.value)}>
-              {purposeOptions.map((option) => (
-                <option key={option}>{option}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            상대
-            <select value={relationship} onChange={(event) => onRelationshipChange(event.target.value)}>
-              {relationshipOptions.map((option) => (
-                <option key={option}>{option}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            채널
-            <select value={channel} onChange={(event) => onChannelChange(event.target.value)}>
-              {channelOptions.map((option) => (
-                <option key={option}>{option}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            톤
-            <select value={tone} onChange={(event) => onToneChange(event.target.value)}>
-              {toneOptions.map((option) => (
-                <option key={option}>{option}</option>
-              ))}
-            </select>
-          </label>
-        </div>
-
         <div className="field feedback-field">
           <label htmlFor="feedbackMessage">추가 요청 / 수정 피드백</label>
           <textarea

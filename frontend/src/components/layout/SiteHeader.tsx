@@ -13,15 +13,6 @@ export default function SiteHeader() {
         </NavLink>
       </nav>
       <div className="header-tools">
-        <button className="icon-button" type="button" aria-label="되돌리기">
-          ↺
-        </button>
-        <button className="icon-button" type="button" aria-label="설정">
-          ⚙
-        </button>
-        <button className="icon-button" type="button" aria-label="계정">
-          ○
-        </button>
         <NavLink className="start-writing" to="/polish">
           Start Writing
         </NavLink>
