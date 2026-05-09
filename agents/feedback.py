@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+import re
+
 from message_polishing.context import append_event, build_feedback_payload, model_to_payload
 from message_polishing.llm import LLMClientProtocol
 from message_polishing.prompts import FEEDBACK_SYSTEM_PROMPT
-from message_polishing.schemas import FeedbackResult, MessagePolishingState
+from message_polishing.schemas import FeatureAnalysisResult, FeedbackResult, MessagePolishingState, coerce_model
+
+_PLACEHOLDER_RE = re.compile(r'\[([^\]]{1,20})\]')
 
 
 def split_feedback_items(feedback_message: str | None) -> list[str]:
@@ -86,6 +90,38 @@ def reconcile_feedback_result(
     )
 
 
+def generate_user_feedback_message(state: MessagePolishingState) -> str | None:
+    """polished message를 보고 부족한 정보를 사용자에게 안내하는 메시지를 생성한다."""
+    analysis = coerce_model(state.get("analysis"), FeatureAnalysisResult)
+    polished_message = state.get("current_polished_message") or ""
+
+    hints: list[str] = []
+
+    if analysis:
+        if analysis.relationship is None:
+            hints.append("상대방과의 관계")
+        if analysis.recipient is None:
+            hints.append("메시지 수신자")
+        if analysis.intent is None:
+            hints.append("메시지의 목적")
+        if analysis.tone is None:
+            hints.append("원하시는 말투나 톤")
+
+    for match in _PLACEHOLDER_RE.finditer(polished_message):
+        hints.append(match.group(1))
+
+    hints = list(dict.fromkeys(hints))
+
+    if not hints:
+        return None
+
+    if len(hints) == 1:
+        return f"{hints[0]}을(를) 알려주시면 더 적절한 메시지를 만들 수 있어요."
+
+    joined = ", ".join(hints[:-1]) + f" 또는 {hints[-1]}"
+    return f"{joined}을(를) 알려주시면 더 적절한 메시지를 만들 수 있어요."
+
+
 class FeedbackAgent:
     def __init__(self, llm_client: LLMClientProtocol) -> None:
         self.llm_client = llm_client
@@ -127,6 +163,7 @@ class FeedbackAgent:
 
         return {
             "feedback_result": result,
+            "feedback_message": generate_user_feedback_message(state),
             "revision_instruction": result.revision_instruction if result.revision_needed else None,
             "events": append_event(
                 state,

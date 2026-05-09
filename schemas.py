@@ -195,6 +195,11 @@ class MessagePolishingOutput(MessagePolishingBaseModel):
         validation_alias=AliasChoices("appliedFeedbackSummary", "applied_feedback_summary"),
         serialization_alias="appliedFeedbackSummary",
     )
+    feedbackMessage: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("feedbackMessage", "feedback_message"),
+        serialization_alias="feedbackMessage",
+    )
     debug: Optional[dict[str, Any]] = None
 
 
@@ -213,6 +218,7 @@ class MessagePolishingState(TypedDict, total=False):
     polishing_validation: Optional[PolishingValidationResult | dict[str, Any]]
 
     feedback_result: Optional[FeedbackResult | dict[str, Any]]
+    feedback_message: Optional[str]
     revision_instruction: Optional[str]
     feedback_iteration: int
 
