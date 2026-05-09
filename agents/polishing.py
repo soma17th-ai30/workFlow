@@ -25,6 +25,29 @@ REQUIRED_VALIDATION_CHECKS = [
     "follows_revision_instruction",
 ]
 
+CRITICAL_VALIDATION_CHECKS = {
+    "preserves_user_intent",
+    "no_hallucinated_facts",
+    "follows_revision_instruction",
+    "appropriate_relationship_tone",
+    "clear_request_or_message",
+}
+
+CRITICAL_ISSUE_PHRASES = [
+    "원문 의도 변경",
+    "의도 변경",
+    "hallucinated",
+    "hallucination",
+    "사용자가 말하지 않은",
+    "구체 사실 추가",
+    "revision_instruction 미반영",
+    "지시 미반영",
+    "관계에 심각하게 맞지",
+    "말투",
+    "불명확",
+    "이해하기 어려운",
+]
+
 
 _SPECIFIC_FACT_TOKENS = [
     "병원",
@@ -58,13 +81,24 @@ def _text_from_context(context: Optional[dict[str, Any] | str]) -> str:
     return str(context)
 
 
-def _allowed_source_text(state: MessagePolishingState) -> str:
+def _analysis_allowed_text(analysis: Optional[FeatureAnalysisResult]) -> str:
+    if not analysis:
+        return ""
+    return " ".join([*analysis.constraints, *analysis.extra_requests])
+
+
+def _allowed_source_text(
+    state: MessagePolishingState,
+    analysis: Optional[FeatureAnalysisResult] = None,
+) -> str:
     return " ".join(
         str(value)
         for value in [
             state.get("original_message"),
             state.get("user_feedback_message"),
             _text_from_context(state.get("user_context")),
+            state.get("context_summary"),
+            _analysis_allowed_text(analysis),
         ]
         if value
     )
@@ -74,18 +108,55 @@ def _contains_hallucinated_specific_facts(message: str, source_text: str) -> boo
     return any(token in message and token not in source_text for token in _SPECIFIC_FACT_TOKENS)
 
 
+def _has_critical_issue(issues: list[str]) -> bool:
+    for issue in issues:
+        issue_text = str(issue)
+        if issue_text in CRITICAL_VALIDATION_CHECKS:
+            return True
+        if any(phrase in issue_text for phrase in CRITICAL_ISSUE_PHRASES):
+            return True
+    return False
+
+
+def _has_formal_tone(message: str) -> bool:
+    return any(marker in message for marker in ["님", "습니다", "드립니다", "여쭙", "부탁드립니다"])
+
+
+def _is_clear_request(message: str) -> bool:
+    return any(marker in message for marker in ["가능", "부탁", "요청", "여쭙", "괜찮", "문의"])
+
+
+def _contains_apology(message: str) -> bool:
+    return any(marker in message for marker in ["죄송", "송구", "사과", "양해"])
+
+
+def _reflects_instruction_text(message: str, instruction: str) -> bool:
+    if not instruction:
+        return True
+    if "금요일" in instruction and "금요일" not in message:
+        return False
+    if any(keyword in instruction for keyword in ["죄송", "사과", "송구"]) and not _contains_apology(message):
+        return False
+    if any(keyword in instruction for keyword in ["짧", "간결"]) and len(message) > 220:
+        return False
+    if any(keyword in instruction for keyword in ["정중", "공손"]) and not _has_formal_tone(message):
+        return False
+    return True
+
+
 def validate_polished_message(
     *,
     state: MessagePolishingState,
     polished_message: str,
     analysis: Optional[FeatureAnalysisResult],
 ) -> PolishingValidationResult:
-    source_text = _allowed_source_text(state)
+    source_text = _allowed_source_text(state, analysis)
     feedback = state.get("user_feedback_message") or ""
     revision_instruction = state.get("revision_instruction") or ""
     relationship_text = " ".join(
         value for value in [analysis.relationship if analysis else None, analysis.recipient if analysis else None] if value
     )
+    extra_request_text = " ".join(analysis.extra_requests if analysis else [])
 
     checks = {
         "preserves_user_intent": bool(polished_message.strip()),
@@ -98,36 +169,42 @@ def validate_polished_message(
         "follows_revision_instruction": True,
     }
 
-    if any(keyword in relationship_text for keyword in ["교수", "상사", "팀장", "부장", "고객"]):
-        checks["appropriate_relationship_tone"] = any(
-            marker in polished_message for marker in ["님", "습니다", "드립니다", "여쭙", "부탁드립니다"]
-        )
+    if any(keyword in relationship_text for keyword in ["교수", "상사", "팀장", "부장", "고객", "선생"]):
+        checks["appropriate_relationship_tone"] = _has_formal_tone(polished_message)
 
     if any(keyword in source_text for keyword in ["요청", "가능", "될까요", "해도", "연장", "문의"]):
-        checks["clear_request_or_message"] = any(
-            marker in polished_message for marker in ["가능", "부탁", "요청", "여쭙", "괜찮", "문의"]
-        )
+        checks["clear_request_or_message"] = _is_clear_request(polished_message)
 
     if any(keyword in feedback for keyword in ["죄송", "미안", "송구", "사과"]):
-        checks["follows_extra_requests"] = checks["follows_extra_requests"] and any(
-            marker in polished_message for marker in ["죄송", "송구", "사과", "양해"]
-        )
+        checks["follows_extra_requests"] = checks["follows_extra_requests"] and _contains_apology(polished_message)
     if "금요일" in feedback:
         checks["follows_extra_requests"] = checks["follows_extra_requests"] and "금요일" in polished_message
     if any(keyword in feedback for keyword in ["짧", "간결"]):
         checks["follows_extra_requests"] = checks["follows_extra_requests"] and len(polished_message) <= 220
-    if revision_instruction:
-        if "금요일" in revision_instruction:
-            checks["follows_revision_instruction"] = checks["follows_revision_instruction"] and "금요일" in polished_message
-        if any(keyword in revision_instruction for keyword in ["죄송", "사과", "송구"]):
-            checks["follows_revision_instruction"] = checks["follows_revision_instruction"] and any(
-                marker in polished_message for marker in ["죄송", "송구", "사과", "양해"]
-            )
+
+    if "사과 표현 강화" in extra_request_text:
+        checks["follows_extra_requests"] = checks["follows_extra_requests"] and _contains_apology(polished_message)
+    if "금요일" in extra_request_text:
+        checks["follows_extra_requests"] = checks["follows_extra_requests"] and "금요일" in polished_message
+    if "짧고 간결" in extra_request_text:
+        checks["follows_extra_requests"] = checks["follows_extra_requests"] and len(polished_message) <= 220
+    if "정중" in extra_request_text or "공손" in extra_request_text:
+        checks["follows_extra_requests"] = checks["follows_extra_requests"] and _has_formal_tone(polished_message)
+
+    checks["follows_revision_instruction"] = _reflects_instruction_text(
+        polished_message,
+        revision_instruction,
+    )
 
     issues = [check for check, passed in checks.items() if not passed]
     score = sum(1 for passed in checks.values() if passed) / len(checks)
+    critical_failed = _has_critical_issue(issues)
     return PolishingValidationResult(
-        passed=not issues and score >= 0.75,
+        passed=score >= 0.75
+        and not critical_failed
+        and checks["preserves_user_intent"]
+        and checks["no_hallucinated_facts"]
+        and checks["grammar_naturalness"],
         score=score,
         issues=issues,
         checks=checks,
@@ -146,8 +223,13 @@ def merge_validation_results(
         )
     issues = list(dict.fromkeys([*llm_validation.issues, *deterministic_validation.issues]))
     score = min(llm_validation.score, deterministic_validation.score)
+    critical_failed = _has_critical_issue(issues)
     return PolishingValidationResult(
-        passed=score >= 0.75 and all(checks.values()),
+        passed=score >= 0.75
+        and not critical_failed
+        and checks.get("preserves_user_intent", False)
+        and checks.get("no_hallucinated_facts", False)
+        and checks.get("grammar_naturalness", False),
         score=score,
         issues=issues,
         checks=checks,
@@ -155,8 +237,7 @@ def merge_validation_results(
 
 
 def _needs_self_revision(validation: PolishingValidationResult) -> bool:
-    critical_issues = {"no_hallucinated_facts", "preserves_user_intent", "clear_request_or_message"}
-    return validation.score < 0.75 or any(issue in critical_issues for issue in validation.issues)
+    return validation.score < 0.75 or _has_critical_issue(validation.issues)
 
 
 def _sanitize_hallucinated_specific_facts(message: str, source_text: str) -> str:
@@ -313,7 +394,7 @@ class PolishingAgent:
     ) -> PolishingResult:
         sanitized_message = _sanitize_hallucinated_specific_facts(
             result.polished_message,
-            _allowed_source_text(state),
+            _allowed_source_text(state, analysis),
         )
         validation = validate_polished_message(
             state=state,

@@ -125,5 +125,6 @@ def run_message_polishing_workflow_with_client(
     return MessagePolishingOutput(
         polishedMessage=polished_message,
         appliedFeedbackSummary=build_applied_feedback_summary(final_state),
+        feedbackMessage=final_state.get("feedback_message"),
         debug=build_debug_payload(final_state) if debug else None,
     )
