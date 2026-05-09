@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import sys
 import traceback
@@ -14,7 +15,18 @@ warnings.filterwarnings("ignore")
 warnings.showwarning = lambda *args, **kwargs: None
 
 if __package__ in {None, ""}:
-    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    package_dir = Path(__file__).resolve().parent
+    sys.path.insert(0, str(package_dir.parent))
+    if "message_polishing" not in sys.modules:
+        package_spec = importlib.util.spec_from_file_location(
+            "message_polishing",
+            package_dir / "__init__.py",
+            submodule_search_locations=[str(package_dir)],
+        )
+        if package_spec and package_spec.loader:
+            package_module = importlib.util.module_from_spec(package_spec)
+            sys.modules["message_polishing"] = package_module
+            package_spec.loader.exec_module(package_module)
 
 from message_polishing import MessagePolishingInput, run_message_polishing_workflow
 from message_polishing.env import load_dotenv
