@@ -12,6 +12,7 @@ from message_polishing.schemas import (
     PolishingValidationResult,
     coerce_model,
 )
+from message_polishing.backend_trace import print_agent_trace
 
 
 REQUIRED_VALIDATION_CHECKS = [
@@ -153,10 +154,13 @@ def validate_polished_message(
     source_text = _allowed_source_text(state, analysis)
     feedback = state.get("user_feedback_message") or ""
     revision_instruction = state.get("revision_instruction") or ""
-    relationship_text = " ".join(
-        value for value in [analysis.relationship if analysis else None, analysis.recipient if analysis else None] if value
-    )
-    extra_request_text = " ".join(analysis.extra_requests if analysis else [])
+    relationship_parts: list[str] = []
+    extra_requests: list[str] = []
+    if analysis:
+        relationship_parts.extend(value for value in [analysis.relationship, analysis.recipient] if value)
+        extra_requests = analysis.extra_requests
+    relationship_text = " ".join(relationship_parts)
+    extra_request_text = " ".join(extra_requests)
 
     checks = {
         "preserves_user_intent": bool(polished_message.strip()),
@@ -304,6 +308,12 @@ class PolishingAgent:
     def __call__(self, state: MessagePolishingState) -> MessagePolishingState:
         analysis = coerce_model(state.get("analysis"), FeatureAnalysisResult)
         payload = build_polishing_payload(state)
+        print_agent_trace(
+            session_id=state.get("session_id"),
+            agent="polishing",
+            direction="input",
+            payload=payload,
+        )
         result = self.llm_client.generate_json(
             system_prompt=POLISHING_SYSTEM_PROMPT,
             user_payload=payload,
@@ -317,6 +327,13 @@ class PolishingAgent:
 
         if not result.validation.checks.get("no_hallucinated_facts", True):
             result = self._sanitize_once(state, result, analysis)
+
+        print_agent_trace(
+            session_id=state.get("session_id"),
+            agent="polishing",
+            direction="output",
+            payload=result,
+        )
 
         consumed_revision = bool(state.get("revision_instruction"))
         next_iteration = int(state.get("feedback_iteration", 0)) + 1 if consumed_revision else int(
@@ -365,13 +382,10 @@ class PolishingAgent:
             "removing hallucinated details, and fixing these issues: "
             f"{', '.join(result.validation.issues)}"
         )
-        payload = build_polishing_payload(
-            {
-                **state,
-                "current_polished_message": result.polished_message,
-                "revision_instruction": revision_instruction,
-            }
-        )
+        revision_state = state.copy()
+        revision_state["current_polished_message"] = result.polished_message
+        revision_state["revision_instruction"] = revision_instruction
+        payload = build_polishing_payload(revision_state)
         revised = self.llm_client.generate_json(
             system_prompt=POLISHING_SYSTEM_PROMPT,
             user_payload=payload,
@@ -379,7 +393,7 @@ class PolishingAgent:
             attachments=state.get("attachments"),
         )
         revised = self._with_deterministic_validation(
-            {**state, "revision_instruction": revision_instruction},
+            revision_state,
             revised,
             analysis,
         )

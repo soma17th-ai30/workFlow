@@ -6,6 +6,7 @@ from message_polishing.context import append_event, build_feedback_payload, mode
 from message_polishing.llm import LLMClientProtocol
 from message_polishing.prompts import FEEDBACK_SYSTEM_PROMPT
 from message_polishing.schemas import FeatureAnalysisResult, FeedbackResult, MessagePolishingState, coerce_model
+from message_polishing.backend_trace import print_agent_trace
 
 _PLACEHOLDER_RE = re.compile(r'\[([^\]]{1,20})\]')
 
@@ -129,6 +130,13 @@ class FeedbackAgent:
     def __call__(self, state: MessagePolishingState) -> MessagePolishingState:
         feedback_message = state.get("user_feedback_message")
         if not feedback_message:
+            payload = build_feedback_payload(state, [])
+            print_agent_trace(
+                session_id=state.get("session_id"),
+                agent="feedback",
+                direction="input",
+                payload=payload,
+            )
             result = FeedbackResult(
                 feedback_satisfied=True,
                 revision_needed=False,
@@ -149,6 +157,12 @@ class FeedbackAgent:
         else:
             feedback_items = split_feedback_items(feedback_message)
             payload = build_feedback_payload(state, feedback_items)
+            print_agent_trace(
+                session_id=state.get("session_id"),
+                agent="feedback",
+                direction="input",
+                payload=payload,
+            )
             result = self.llm_client.generate_json(
                 system_prompt=FEEDBACK_SYSTEM_PROMPT,
                 user_payload=payload,
@@ -160,6 +174,13 @@ class FeedbackAgent:
                 feedback_items=feedback_items,
                 polished_message=state.get("current_polished_message") or "",
             )
+
+        print_agent_trace(
+            session_id=state.get("session_id"),
+            agent="feedback",
+            direction="output",
+            payload=result,
+        )
 
         return {
             "feedback_result": result,

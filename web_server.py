@@ -3,6 +3,8 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import mimetypes
+import os
 import sys
 import traceback
 import warnings
@@ -10,6 +12,7 @@ from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
+from urllib.parse import unquote, urlparse
 
 warnings.filterwarnings("ignore")
 warnings.showwarning = lambda *args, **kwargs: None
@@ -275,19 +278,26 @@ HTML = """<!doctype html>
 """
 
 
+def get_static_dir() -> Path:
+    configured_path = os.environ.get("MESSAGE_POLISHING_STATIC_DIR")
+    if configured_path:
+        return Path(configured_path).expanduser().resolve()
+    return Path(__file__).resolve().parent / "frontend" / "dist"
+
+
 class PolishingRequestHandler(BaseHTTPRequestHandler):
     server_version = "MessagePolishingHTTP/0.1"
 
     def do_GET(self) -> None:
-        if self.path in {"/", "/index.html"}:
-            self._send_bytes(HTML.encode("utf-8"), content_type="text/html; charset=utf-8")
-            return
         if self.path == "/health":
             self._send_json({"ok": True})
             return
-        if self.path == "/favicon.ico":
-            self.send_response(HTTPStatus.NO_CONTENT)
-            self.end_headers()
+
+        if self._send_static_file():
+            return
+
+        if self.path in {"/", "/index.html"}:
+            self._send_bytes(HTML.encode("utf-8"), content_type="text/html; charset=utf-8")
             return
         self._send_json({"error": "Not found"}, status=HTTPStatus.NOT_FOUND)
 
@@ -321,6 +331,45 @@ class PolishingRequestHandler(BaseHTTPRequestHandler):
             status=status,
             content_type="application/json; charset=utf-8",
         )
+
+    def _send_static_file(self) -> bool:
+        static_dir = get_static_dir()
+        if not static_dir.is_dir():
+            return False
+
+        parsed_path = urlparse(self.path).path
+        if parsed_path.startswith("/api/"):
+            return False
+
+        requested_path = unquote(parsed_path).lstrip("/") or "index.html"
+        static_root = static_dir.resolve()
+        candidate = (static_root / requested_path).resolve()
+        try:
+            candidate.relative_to(static_root)
+        except ValueError:
+            self._send_json({"error": "Not found"}, status=HTTPStatus.NOT_FOUND)
+            return True
+
+        if candidate.is_dir():
+            candidate = candidate / "index.html"
+        if not candidate.is_file():
+            fallback = static_root / "index.html"
+            if fallback.is_file() and self._should_fallback_to_index(parsed_path):
+                candidate = fallback
+            else:
+                return False
+
+        content_type = mimetypes.guess_type(str(candidate))[0] or "application/octet-stream"
+        if content_type.startswith("text/"):
+            content_type = f"{content_type}; charset=utf-8"
+        self._send_bytes(candidate.read_bytes(), content_type=content_type)
+        return True
+
+    def _should_fallback_to_index(self, parsed_path: str) -> bool:
+        if Path(parsed_path).suffix:
+            return False
+        accept_header = self.headers.get("Accept", "")
+        return "text/html" in accept_header or "*/*" in accept_header
 
     def _send_bytes(
         self,
