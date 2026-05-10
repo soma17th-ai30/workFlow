@@ -22,6 +22,7 @@ export type MessagePolishingRequest = {
 export type MessagePolishingResponse = {
   polishedMessage: string;
   appliedFeedbackSummary?: string;
+  feedbackMessage?: string | null;
 };
 
 export type ApiErrorResponse = {

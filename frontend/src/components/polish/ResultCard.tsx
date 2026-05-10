@@ -7,6 +7,7 @@ type ResultCardProps = {
   relationship: string;
   tone: string;
   appliedFeedbackSummary: string;
+  feedbackMessage?: string | null;
   isLoading: boolean;
   hasResult: boolean;
   onCopy: () => void;
@@ -19,6 +20,7 @@ export default function ResultCard({
   relationship,
   tone,
   appliedFeedbackSummary,
+  feedbackMessage,
   isLoading,
   hasResult,
   onCopy
@@ -46,6 +48,12 @@ export default function ResultCard({
           resultText || <span className="empty-result">원문을 입력하고 메시지를 다듬어 보세요.</span>
         )}
       </div>
+
+      {hasResult && feedbackMessage && (
+        <p style={{ color: "#2563eb", fontSize: "0.875rem", marginTop: "0.75rem" }}>
+          {feedbackMessage}
+        </p>
+      )}
 
       {hasResult && (
         <>

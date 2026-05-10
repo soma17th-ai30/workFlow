@@ -35,6 +35,7 @@ export default function PolishPage() {
   const [previousPolishedMessage, setPreviousPolishedMessage] = useState<string | null>(null);
   const [polishedMessage, setPolishedMessage] = useState("");
   const [appliedFeedbackSummary, setAppliedFeedbackSummary] = useState("");
+  const [apiFeedbackMessage, setApiFeedbackMessage] = useState<string | null>(null);
   const [purpose, setPurpose] = useState(purposeOptions[0]);
   const [relationship, setRelationship] = useState(relationshipOptions[0]);
   const [channel, setChannel] = useState(channelOptions[0]);
@@ -90,6 +91,7 @@ export default function PolishPage() {
       setPolishedMessage(data.polishedMessage);
       setPreviousPolishedMessage(data.polishedMessage);
       setAppliedFeedbackSummary(data.appliedFeedbackSummary || "");
+      setApiFeedbackMessage(data.feedbackMessage ?? null);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "알 수 없는 오류가 발생했습니다.");
     } finally {
@@ -123,6 +125,7 @@ export default function PolishPage() {
     setPreviousPolishedMessage(null);
     setPolishedMessage("");
     setAppliedFeedbackSummary("");
+    setApiFeedbackMessage(null);
     setPurpose(purposeOptions[0]);
     setRelationship(relationshipOptions[0]);
     setChannel(channelOptions[0]);
@@ -165,6 +168,7 @@ export default function PolishPage() {
           relationship={relationship}
           tone={tone}
           appliedFeedbackSummary={appliedFeedbackSummary}
+          feedbackMessage={apiFeedbackMessage}
           isLoading={isLoading}
           hasResult={hasResult}
           onCopy={handleCopy}
