@@ -76,11 +76,14 @@ export default function PolishPage() {
     setToast(null);
 
     try {
+      const normalizedFeedbackMessage = feedbackMessage.trim();
+      const userContextForRequest =
+        previousPolishedMessage && normalizedFeedbackMessage ? userContext : null;
       const data = await polishMessage({
         originalMessage: originalMessage.trim(),
-        feedbackMessage: feedbackMessage.trim() || null,
+        feedbackMessage: normalizedFeedbackMessage || null,
         previousPolishedMessage,
-        userContext,
+        userContext: userContextForRequest,
         sessionId
       });
 

@@ -99,15 +99,9 @@ def make_initial_state(
     )
 
 
-def build_feature_analysis_payload(state: MessagePolishingState, heuristic_signals: dict[str, Any]) -> dict[str, Any]:
+def build_feature_analysis_payload(state: MessagePolishingState) -> dict[str, Any]:
     return {
         "original_message": state.get("original_message"),
-        "user_feedback_message": state.get("user_feedback_message"),
-        "user_context": state.get("user_context"),
-        "context_summary": state.get("context_summary"),
-        "previous_polished_message": state.get("previous_polished_message"),
-        "previous_analysis": model_to_payload(state.get("analysis")),
-        "heuristic_signals": heuristic_signals,
     }
 
 

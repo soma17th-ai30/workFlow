@@ -33,6 +33,12 @@ copy .env.example .env
 python web_server.py --host 127.0.0.1 --port 8000
 ```
 
+시연 중 Agent별 backend input/output을 서버 콘솔에 출력하려면:
+
+```bash
+MESSAGE_POLISHING_TRACE=1 python web_server.py --host 127.0.0.1 --port 8000
+```
+
 프론트엔드 실행:
 
 ```bash
@@ -44,6 +50,49 @@ npm run dev
 
 ```text
 http://127.0.0.1:5173
+```
+
+## Docker 실행
+
+Docker 이미지는 Vite 프론트엔드를 먼저 빌드한 뒤, Python 백엔드가 `/api`와 정적 프론트 파일을 함께 서빙합니다.
+
+`.env` 파일에 최소한 다음 값을 설정하세요.
+
+```bash
+UPSTAGE_API_KEY=your-api-key
+```
+
+컨테이너 실행:
+
+```bash
+docker compose up --build
+```
+
+브라우저에서 접속:
+
+```text
+http://127.0.0.1:8000
+```
+
+포트를 바꾸려면 `.env`나 shell에 `MESSAGE_POLISHING_PORT`를 설정하면 됩니다.
+
+```bash
+MESSAGE_POLISHING_PORT=8080 docker compose up --build
+```
+
+## 구조
+
+```text
+.
+├── agents/                 # LangGraph agent 구현
+├── frontend/               # Vite React frontend
+├── Dockerfile              # frontend build + backend runtime 단일 이미지
+├── docker-compose.yml      # 로컬 Docker 실행 구성
+├── web_server.py           # API 서버와 frontend/dist 정적 파일 서빙
+├── graph.py                # workflow graph
+├── llm.py                  # LLM 호출, JSON schema validation/repair
+├── prompts.py              # agent prompt/output rules
+└── schemas.py              # Pydantic input/output/state schema
 ```
 
 ## 경로
