@@ -3,7 +3,7 @@ import {
   purposeOptions,
   relationshipOptions,
   scenarioExamples,
-  toneOptions
+  toneOptions,
 } from "../../constants/polishOptions";
 
 type Scenario = (typeof scenarioExamples)[number];
@@ -49,7 +49,7 @@ export default function ComposerCard({
   onToneChange,
   onScenarioSelect,
   onSubmit,
-  onReset
+  onReset,
 }: ComposerCardProps) {
   return (
     <section className="composer-card" aria-label="메시지 입력">
@@ -78,46 +78,14 @@ export default function ComposerCard({
 
         <div className="scenario-row" aria-label="빠른 시나리오 선택">
           {scenarioExamples.map((scenario) => (
-            <button type="button" key={scenario.label} onClick={() => onScenarioSelect(scenario)}>
+            <button
+              type="button"
+              key={scenario.label}
+              onClick={() => onScenarioSelect(scenario)}
+            >
               {scenario.label}
             </button>
           ))}
-        </div>
-
-        <div className="step-label">2. 목적과 관계 맥락 선택</div>
-        <div className="context-grid" aria-label="메시지 맥락 선택">
-          <label>
-            목적
-            <select value={purpose} onChange={(event) => onPurposeChange(event.target.value)}>
-              {purposeOptions.map((option) => (
-                <option key={option}>{option}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            상대
-            <select value={relationship} onChange={(event) => onRelationshipChange(event.target.value)}>
-              {relationshipOptions.map((option) => (
-                <option key={option}>{option}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            채널
-            <select value={channel} onChange={(event) => onChannelChange(event.target.value)}>
-              {channelOptions.map((option) => (
-                <option key={option}>{option}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            톤
-            <select value={tone} onChange={(event) => onToneChange(event.target.value)}>
-              {toneOptions.map((option) => (
-                <option key={option}>{option}</option>
-              ))}
-            </select>
-          </label>
         </div>
 
         <div className="field feedback-field">
@@ -132,13 +100,22 @@ export default function ComposerCard({
         </div>
 
         <div className="privacy-note">
-          메시지 원문은 저장하지 않는 것을 원칙으로 하고, 입력한 맥락은 이번 요청 처리에만 사용됩니다.
+          메시지 원문은 저장하지 않는 것을 원칙으로 하고, 입력한 맥락은 이번
+          요청 처리에만 사용됩니다.
         </div>
 
         <div className="actions">
-          <button className="primary-action" type="submit" disabled={!canSubmit}>
+          <button
+            className="primary-action"
+            type="submit"
+            disabled={!canSubmit}
+          >
             <span aria-hidden="true">✎</span>
-            {isLoading ? "다듬는 중" : hasResult ? "피드백 반영하기" : "메시지 다듬기"}
+            {isLoading
+              ? "다듬는 중"
+              : hasResult
+                ? "피드백 반영하기"
+                : "메시지 다듬기"}
           </button>
           <button type="button" className="secondary-action" onClick={onReset}>
             초기화
